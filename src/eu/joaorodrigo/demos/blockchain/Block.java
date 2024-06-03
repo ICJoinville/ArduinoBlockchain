@@ -5,9 +5,19 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.j256.ormlite.dao.ForeignCollection;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
+import com.j256.ormlite.table.DatabaseTable;
+
+import eu.joaorodrigo.demos.blockchain.account.Account;
+
+@DatabaseTable(tableName = "blocks")
 public class Block {
 	
 	private static ArrayList<Block> BLOCKS = new ArrayList<>();
@@ -15,8 +25,8 @@ public class Block {
 	public static void printAllBlocks() {
 		for(Block b : BLOCKS) {
 			b.print();
-			System.out.println();
-			System.out.println("--------------");
+			Report.log("");
+			Report.log("--------------");
 
 		}
 	}
@@ -25,10 +35,10 @@ public class Block {
 		
 		HashMap<Account, Double> moneyChange = new HashMap<Account, Double>();
 		
-		System.out.println("");
-		System.out.println("--------------");
-		System.out.println("INICIANDO VALIDAÇÃO (" + BLOCKS.size() + " blocos)");
-		System.out.println("--------------");
+		Report.log("");
+		Report.log("--------------");
+		Report.log("INICIANDO VALIDAÇÃO (" + BLOCKS.size() + " blocos)");
+		Report.log("--------------");
 		int lastIndex = BLOCKS.size();
 		int currentIndex = lastIndex;
 		
@@ -38,7 +48,7 @@ public class Block {
 			--currentIndex;
 			Block b = BLOCKS.get(currentIndex);
 			System.out.print("\nValidando bloco " + b.getId() + ": ");
-			boolean valid = b.hash == Arrays.hashCode(new int[] {Arrays.hashCode(b.getTransactions()), b.getPreviousHash()});
+			boolean valid = b.hash == Arrays.hashCode(new int[] {b.getTransactions().hashCode(), b.getPreviousHash()});
 			System.out.print(valid);
 			
 			if(!valid) {
@@ -46,44 +56,49 @@ public class Block {
 				break;
 			}
 		
-		System.out.println("");
+		Report.log("");
 		
 		if(success) {
-			System.out.println("------------------");
-			System.out.println("VALIDAÇÃO SUCESSO!");
-			System.out.println("------------------");
-			System.out.println("");
+			Report.log("------------------");
+			Report.log("VALIDAÇÃO SUCESSO!");
+			Report.log("------------------");
+			Report.log("");
 		}else {
-			System.out.println("------------------");
-			System.out.println("VALIDAÇÃO FALHOU NO BLOCO " + currentIndex);
-			System.out.println("------------------");
+			Report.log("------------------");
+			Report.log("VALIDAÇÃO FALHOU NO BLOCO " + currentIndex);
+			Report.log("------------------");
 			System.exit(0);
 		}
 		}
 		return success;
 	}
 	
+	@DatabaseField(id = true)
 	private int id;
-	private Transaction[] transactions;
+	
+	@ForeignCollectionField(columnName = "transactions")
+	private Collection<Transaction> transactions;
+	
+	@DatabaseField(foreign = true, foreignAutoRefresh = true, columnName = "previous_block")
 	private Block previousBlock;
 	private boolean isGenesis = false;
 	
 	private int hash;
 	
-	public Block(int id, Transaction[] transactions, Block previousBlock) {
+	public Block(int id, Collection<Transaction> transactions, Block previousBlock) {
 		this.id = id;
 		this.transactions = transactions;
 		this.previousBlock = previousBlock;
-		this.hash = Arrays.hashCode(new int[] {Arrays.hashCode(transactions), getPreviousHash()});
+		this.hash = Arrays.hashCode(new int[] {transactions.hashCode(), getPreviousHash()});
 	
 		BLOCKS.add(this);
 	}
 	
-	public Block(int id, Transaction[] transactions, boolean isGenesis) {
+	public Block(int id, Collection<Transaction> transactions, boolean isGenesis) {
 		if(isGenesis) {
 			this.id = id;
 			this.transactions = transactions;
-			this.hash = Arrays.hashCode(new int[] {Arrays.hashCode(transactions), 0});
+			this.hash = Arrays.hashCode(new int[] {transactions.hashCode(), 0});
 			
 			BLOCKS.add(this);
 			this.isGenesis = true;
@@ -106,26 +121,28 @@ public class Block {
 		return hash; 
 	}
 	
-	public Transaction[] getTransactions() {
+	public Collection<Transaction> getTransactions() {
 		return transactions;
 	}
 	
 	public void print() {
-		System.out.println("Bloco " + id + ":");
-		System.out.println(" - Transações (total: "+ transactions.length +"):");
+		Report.log("Bloco " + id + ":");
+		Report.log(" - Transações (total: "+ transactions.size() +"):");
 		
 		
 		int i = 0;
 		
 		for(Transaction t : transactions) {
-			System.out.println("");
-			System.out.println(" Transação " + i + ":");
-			System.out.println("  - Data: " + Instant.ofEpochMilli(t.getTimestamp()).atZone(ZoneId.of("America/Sao_Paulo")).toLocalDateTime());;
-			System.out.println("  - Dono: " + t.getOwner());
-			System.out.println("  - Valor Novo: " + t.getAmount());
+			Report.log("");
+			Report.log(" Transação " + i + ":");
+			Report.log("  - Data: " + Instant.ofEpochMilli(t.getTimestamp()).atZone(ZoneId.of("America/Sao_Paulo")).toLocalDateTime());
+			Report.log("  - Dono: " + t.getOwner());
+			Report.log("  - Valor Novo: " + t.getAmount());
 			
 			i++;
 		}
 		
 	}
+	
+	public Block() {}
 }

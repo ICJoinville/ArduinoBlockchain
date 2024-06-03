@@ -7,6 +7,7 @@ public class SerialReadEventHandler implements jssc.SerialPortEventListener {
 	private static String a = "";
 	private static String lastBytes = "";
 	private static int b;
+	private static boolean isFirstEq = true;
 	
     public void serialEvent(jssc.SerialPortEvent evt) {
         if (evt.isRXCHAR())
@@ -20,7 +21,12 @@ public class SerialReadEventHandler implements jssc.SerialPortEventListener {
                 	a = a.replace("=", "").replace("\n", "").trim();
                 	b = Integer.parseInt(a);
                 	a = "";
-                	BlockchainDemo.sendNewValue(b);
+                	
+                	if(!isFirstEq) {                		
+                		BlockchainDemo.sendNewValue(b);
+                	}
+                	
+                	isFirstEq = false;
                 }
             }
             catch (Exception e)
