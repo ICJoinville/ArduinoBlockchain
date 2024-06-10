@@ -11,11 +11,13 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.j256.ormlite.dao.ForeignCollection;
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 
 import eu.joaorodrigo.demos.blockchain.account.Account;
+import eu.joaorodrigo.demos.blockchain.hashing.SHA256;
 
 @DatabaseTable(tableName = "blocks")
 public class Block {
@@ -48,7 +50,7 @@ public class Block {
 			--currentIndex;
 			Block b = BLOCKS.get(currentIndex);
 			System.out.print("\nValidando bloco " + b.getId() + ": ");
-			boolean valid = b.hash == Arrays.hashCode(new int[] {b.getTransactions().hashCode(), b.getPreviousHash()});
+			boolean valid = b.hash == SHA256.encode(b);
 			System.out.print(valid);
 			
 			if(!valid) {
@@ -76,29 +78,35 @@ public class Block {
 	@DatabaseField(id = true)
 	private int id;
 	
-	@ForeignCollectionField(columnName = "transactions")
-	private Collection<Transaction> transactions;
+	@ForeignCollectionField(columnName = "transactions", eager = false)
+	private ForeignCollection<Transaction> transactions;
 	
 	@DatabaseField(foreign = true, foreignAutoRefresh = true, columnName = "previous_block")
 	private Block previousBlock;
 	private boolean isGenesis = false;
 	
-	private int hash;
+	@DatabaseField(columnName = "hash")
+	private String hash;
 	
-	public Block(int id, Collection<Transaction> transactions, Block previousBlock) {
+	@DatabaseField(columnName = "previousHash")
+	private String previousHash;
+	
+	public Block(int id, Block previousBlock) {
 		this.id = id;
-		this.transactions = transactions;
+//		this.transactions = transactions;
 		this.previousBlock = previousBlock;
-		this.hash = Arrays.hashCode(new int[] {transactions.hashCode(), getPreviousHash()});
+		if(this.previousBlock != null) this.previousHash = previousBlock.getHash();
+		else this.previousHash = null;
+		this.hash = SHA256.encode(this);
 	
 		BLOCKS.add(this);
 	}
 	
-	public Block(int id, Collection<Transaction> transactions, boolean isGenesis) {
+	public Block(int id, boolean isGenesis) {
 		if(isGenesis) {
 			this.id = id;
-			this.transactions = transactions;
-			this.hash = Arrays.hashCode(new int[] {transactions.hashCode(), 0});
+//			this.transactions = transactions;
+			this.hash = SHA256.encode(this);
 			
 			BLOCKS.add(this);
 			this.isGenesis = true;
@@ -113,26 +121,26 @@ public class Block {
 		return previousBlock;
 	}
 	
-	public int getPreviousHash() {
-		return previousBlock == null ? 0 : previousBlock.getHash();
+	public String getPreviousHash() {
+		return previousBlock == null ? "" : previousBlock.getHash();
 	}
 	
-	public int getHash() {
+	public String getHash() {
 		return hash; 
 	}
 	
 	public Collection<Transaction> getTransactions() {
-		return transactions;
+		return Transaction.getTransactionByBlockId(getId());
 	}
 	
 	public void print() {
 		Report.log("Bloco " + id + ":");
-		Report.log(" - Transações (total: "+ transactions.size() +"):");
+		Report.log(" - Transações (total: "+ getTransactions().size() +"):");
 		
 		
 		int i = 0;
 		
-		for(Transaction t : transactions) {
+		for(Transaction t : getTransactions()) {
 			Report.log("");
 			Report.log(" Transação " + i + ":");
 			Report.log("  - Data: " + Instant.ofEpochMilli(t.getTimestamp()).atZone(ZoneId.of("America/Sao_Paulo")).toLocalDateTime());

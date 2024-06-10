@@ -1,9 +1,14 @@
 package eu.joaorodrigo.demos.blockchain;
 
+import java.sql.SQLException;
+import java.util.Collection;
+import java.util.List;
+
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 import eu.joaorodrigo.demos.blockchain.account.Account;
+import eu.joaorodrigo.demos.blockchain.database.DatabaseInitializer;
 
 @DatabaseTable(tableName = "transactions")
 public class Transaction {
@@ -45,6 +50,20 @@ public class Transaction {
 	
 	public long getTimestamp() {
 		return millis;
+	}
+	
+	public void setBlock(Block b) {
+		block = b;
+	}
+	
+	public static List<Transaction> getTransactionByBlockId(int id) {
+		try {
+			return DatabaseInitializer.transactionDao.queryForEq("block_id", id);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	

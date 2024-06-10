@@ -13,6 +13,8 @@ import java.util.Scanner;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
+import com.j256.ormlite.dao.ForeignCollection;
+
 import eu.joaorodrigo.demos.blockchain.account.Account;
 import eu.joaorodrigo.demos.blockchain.account.AccountManager;
 import eu.joaorodrigo.demos.blockchain.database.DatabaseInitializer;
@@ -60,15 +62,18 @@ public class BlockchainDemo {
 		lastBlockId = DatabaseInitializer.blockDao.countOf();
 		System.out.println(lastBlockId + " transações encontradas.");
 		
-		lastBlock = new Block((int) lastBlockId, new ArrayList<Transaction>(), null);
-		lastBlockId++;
+		if(lastBlockId == 0) lastBlock = new Block(0, true);
+		else lastBlock = DatabaseInitializer.blockDao.queryForId((int) lastBlockId);
+		
 		
 		Thread thread = new Thread(() -> {
 			while(true) {
-				Block block = new Block((int) lastBlockId + 1, new ArrayList<Transaction>(pendingTransactions), lastBlock);
+				Block block = new Block((int) lastBlockId + 1, lastBlock);
 				Report.log(LocalDateTime.now() + " : Applying new block {" + block.getId() + "} with " + pendingTransactions.size() + " transactions.");
 				
 				try {
+					pendingTransactions.forEach((t) -> t.setBlock(block));
+					DatabaseInitializer.transactionDao.create(pendingTransactions);
 					DatabaseInitializer.blockDao.create(block);
 				} catch (SQLException e) {
 					// TODO Auto-generated catch block
