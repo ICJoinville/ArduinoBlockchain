@@ -88,7 +88,7 @@ public class Block {
 	@DatabaseField(columnName = "hash")
 	private String hash;
 	
-	@DatabaseField(columnName = "previousHash")
+	@DatabaseField(columnName = "previous_hash")
 	private String previousHash;
 	
 	public Block(int id, Block previousBlock) {

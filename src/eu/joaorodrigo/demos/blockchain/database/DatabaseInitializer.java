@@ -14,7 +14,7 @@ import eu.joaorodrigo.demos.blockchain.account.Account;
 
 public class DatabaseInitializer {
 	
-	protected static String DATABASE_URL = "jdbc:sqlite:blockchain.db";
+	protected static String DATABASE_URL = "jdbc:mysql://localhost/joaorodrigo_chaintracer";
 	
 	public static Dao<Account, String> userDao;
 	public static Dao<Block, Integer> blockDao;
@@ -26,7 +26,7 @@ public class DatabaseInitializer {
 		ConnectionSource connectionSource = null;
 		
 		try {
-			connectionSource = new JdbcConnectionSource(DATABASE_URL);
+			connectionSource = new JdbcConnectionSource(DATABASE_URL, "root", "root");
 			userDao = DaoManager.createDao(connectionSource, Account.class);
 			blockDao = DaoManager.createDao(connectionSource, Block.class);
 			transactionDao = DaoManager.createDao(connectionSource, Transaction.class);
