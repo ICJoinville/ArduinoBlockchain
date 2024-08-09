@@ -1,0 +1,6 @@
+target/
+.idea/
+.settings/
+bin/
+ArduinoBlockchain.iml
+blockchain-arduino.log
