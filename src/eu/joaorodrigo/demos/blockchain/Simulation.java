@@ -1,10 +1,15 @@
 package eu.joaorodrigo.demos.blockchain;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import eu.joaorodrigo.demos.blockchain.account.Account;
 import eu.joaorodrigo.demos.blockchain.account.AccountManager;
+import eu.joaorodrigo.demos.blockchain.adapters.BlockAdapter;
 import eu.joaorodrigo.demos.blockchain.database.DatabaseInitializer;
+import eu.joaorodrigo.demos.blockchain.displays.AlwaysOnTopDisplay;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -26,15 +31,10 @@ public class Simulation {
     public static int lastValue;
     public static List<Transaction> pendingTransactions = new ArrayList<>();
 
-    private static JLabel lastValueLabel = new JLabel("0");
 
     public static void main(String[] args) throws IOException, SQLException {
         Report.loadLogFile();
-
-        JFrame frame = new JFrame("Blockchain");
-        frame.setVisible(true);
-        frame.add(lastValueLabel);
-        frame.setSize(80,60);
+        AlwaysOnTopDisplay.setup();
 
         Report.log("Aguardando conexão serial.");
 
@@ -44,6 +44,7 @@ public class Simulation {
         if(lastBlockId == 0) lastBlock = new Block(0, true);
         else lastBlock = DatabaseInitializer.blockDao.queryForId((int) lastBlockId);
 
+        System.out.println(new GsonBuilder().registerTypeAdapter(Block.class, new BlockAdapter()).create().toJson(lastBlock));
 
         Thread thread = new Thread(() -> {
             while(true) {
@@ -63,6 +64,7 @@ public class Simulation {
 
                 lastBlock = block;
                 lastBlockId = block.getId();
+                AlwaysOnTopDisplay.updateLastBlockId(lastBlockId);
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
@@ -95,7 +97,7 @@ public class Simulation {
 
     public static void sendNewValue(int b) {
         if(lastValue == b) return;
-        lastValueLabel.setText(b + "");
+        AlwaysOnTopDisplay.updateLastValue(b);
         pendingTransactions.add(Transaction.createTransaction(local, b));
     }
 
@@ -114,5 +116,12 @@ public class Simulation {
         });
         t.start();
     }
+
+    /*
+    camelCase
+    PascalCase
+    snake_case
+    kebab-case
+     */
 
 }

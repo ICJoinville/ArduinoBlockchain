@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
@@ -17,11 +19,14 @@ import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 
 import eu.joaorodrigo.demos.blockchain.account.Account;
+import eu.joaorodrigo.demos.blockchain.adapters.BlockAdapter;
 import eu.joaorodrigo.demos.blockchain.hashing.SHA256;
 
 @DatabaseTable(tableName = "blocks")
 public class Block {
-	
+
+	public static Gson blockAdaptedGson = new GsonBuilder().registerTypeAdapter(Block.class, new BlockAdapter()).create();
+
 	private static ArrayList<Block> BLOCKS = new ArrayList<>();
 	
 	public static void printAllBlocks() {

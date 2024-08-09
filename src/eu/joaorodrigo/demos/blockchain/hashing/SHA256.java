@@ -10,8 +10,7 @@ import eu.joaorodrigo.demos.blockchain.Block;
 import eu.joaorodrigo.demos.blockchain.Report;
 
 public class SHA256 {
-	
-	private static final Gson gson = new Gson();
+
 	private static 		 MessageDigest digest;
 	
 	static {
@@ -36,7 +35,7 @@ public class SHA256 {
 	}
 	
 	public static String encode(Block block) {
-		String json = gson.toJson(block);
+		String json = Block.blockAdaptedGson.toJson(block);
 //		Report.log(json);
 		return bytesToHex(digest.digest(json.getBytes(StandardCharsets.UTF_8)));
 	}

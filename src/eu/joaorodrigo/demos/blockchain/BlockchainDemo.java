@@ -18,6 +18,7 @@ import com.j256.ormlite.dao.ForeignCollection;
 import eu.joaorodrigo.demos.blockchain.account.Account;
 import eu.joaorodrigo.demos.blockchain.account.AccountManager;
 import eu.joaorodrigo.demos.blockchain.database.DatabaseInitializer;
+import eu.joaorodrigo.demos.blockchain.displays.AlwaysOnTopDisplay;
 import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
@@ -39,15 +40,13 @@ public class BlockchainDemo {
 	
 	private static short baud = 9600;
 	public static SerialPort comPort;
-	private static JLabel lastValueLabel = new JLabel("0");
+
+
 
 	public static void main(String[] args) throws IOException, SerialPortException, SQLException {
 		Report.loadLogFile();
-		
-		JFrame frame = new JFrame("Blockchain");
-		frame.setVisible(true);
-		frame.add(lastValueLabel);
-		frame.setSize(80,60);
+
+		AlwaysOnTopDisplay.setup();
 		
 		Report.log("Aguardando conexão serial.");
 		while(SerialPortList.getPortNames().length == 0);
@@ -84,6 +83,7 @@ public class BlockchainDemo {
 				
 				lastBlock = block;
 				lastBlockId = block.getId();
+				AlwaysOnTopDisplay.updateLastBlockId(lastBlockId);
 				try {
 					Thread.sleep(5000);
 				} catch (InterruptedException e) {
@@ -115,7 +115,7 @@ public class BlockchainDemo {
 	
 	public static void sendNewValue(int b) {
 		if(lastValue == b) return;
-		lastValueLabel.setText(b + "");
+		AlwaysOnTopDisplay.updateLastValue(b);
 		pendingTransactions.add(Transaction.createTransaction(local, b));
 	}
 
