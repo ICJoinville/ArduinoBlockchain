@@ -18,7 +18,7 @@ public class BlockAdapter extends TypeAdapter<Block> {
         jsonWriter.name("previousHash");
         jsonWriter.value(block.getPreviousHash());
         jsonWriter.name("previousBlockId");
-        jsonWriter.value(block.getPreviousBlock().getId());
+        jsonWriter.value(block.getPreviousBlock() != null ? block.getPreviousBlock().getId() : 0);
         jsonWriter.endObject();
     }
 
