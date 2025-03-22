@@ -55,7 +55,7 @@ public class Block {
 			--currentIndex;
 			Block b = BLOCKS.get(currentIndex);
 			System.out.print("\nValidando bloco " + b.getId() + ": ");
-			boolean valid = b.hash == SHA256.encode(b);
+			boolean valid = b.hash.equals(SHA256.encode(b));
 			System.out.print(valid);
 			
 			if(!valid) {
@@ -150,7 +150,7 @@ public class Block {
 			Report.log(" Transação " + i + ":");
 			Report.log("  - Data: " + Instant.ofEpochMilli(t.getTimestamp()).atZone(ZoneId.of("America/Sao_Paulo")).toLocalDateTime());
 			Report.log("  - Dono: " + t.getOwner());
-			Report.log("  - Valor Novo: " + t.getAmount());
+			Report.log("  - Valor Novo: " + t.getData());
 			
 			i++;
 		}

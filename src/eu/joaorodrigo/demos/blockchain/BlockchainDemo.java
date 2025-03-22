@@ -1,19 +1,11 @@
 package eu.joaorodrigo.demos.blockchain;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
-
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-
-import com.j256.ormlite.dao.ForeignCollection;
 
 import eu.joaorodrigo.demos.blockchain.account.Account;
 import eu.joaorodrigo.demos.blockchain.account.AccountManager;
@@ -35,14 +27,10 @@ public class BlockchainDemo {
 	private static Block lastBlock;
 	private static long lastBlockId;
 	private static Account local;
-	public static int lastValue;
+	public static String lastValue;
 	public static List<Transaction> pendingTransactions = new ArrayList<>();
-	private static final boolean debug = false;
-	private static int debugMaxValue = Integer.MIN_VALUE;
-	private static int debugMinValue = Integer.MAX_VALUE;
-	private static int debugTimer = 30 * 60;
 
-	private static short baud = 9600;
+	private static short baud = (short) 115200;
 	public static SerialPort comPort;
 
 
@@ -50,13 +38,13 @@ public class BlockchainDemo {
 	public static void main(String[] args) throws IOException, SerialPortException, SQLException {
 		Report.loadLogFile();
 
-		AlwaysOnTopDisplay.setup(debug);
+		AlwaysOnTopDisplay.setup();
 		
 		Report.log("Aguardando conexão serial.");
 		while(SerialPortList.getPortNames().length == 0);
 		comPort = new SerialPort(SerialPortList.getPortNames()[0]);
 		comPort.openPort();
-		comPort.setParams(BAUDRATE_9600,  DATABITS_8, STOPBITS_1, PARITY_NONE);
+		comPort.setParams(BAUDRATE_115200,  DATABITS_8, STOPBITS_1, PARITY_NONE);
 		
 		int mask = SerialPort.MASK_RXCHAR + SerialPort.MASK_CTS + SerialPort.MASK_DSR;
 		comPort.setEventsMask(mask);
@@ -67,31 +55,11 @@ public class BlockchainDemo {
 		
 		if(lastBlockId == 0) lastBlock = new Block(0, true);
 		else lastBlock = DatabaseInitializer.blockDao.queryForId((int) lastBlockId);
-
-		if(debug && debugTimer < 0) {
-			new Thread(() -> {
-				while(debugTimer > 0) {
-					debugTimer--;
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						throw new RuntimeException(e);
-					}
-				}
-				try {
-					System.out.println("Min: " + debugMinValue + " Max: " + debugMaxValue + " Qtd. Transações: " + DatabaseInitializer.transactionDao.countOf() + " Qtd. Blocos: " + DatabaseInitializer.blockDao.countOf());
-				} catch (SQLException e) {
-					System.out.println("Min: " + debugMinValue + " Max: " + debugMaxValue);
-					throw new RuntimeException(e);
-				}
-				System.exit(0);
-			}).start();
-		}
 		
 		Thread thread = new Thread(() -> {
 			while(true) {
 				Block block = new Block((int) lastBlockId + 1, lastBlock);
-				Report.log(LocalDateTime.now() + " : Applying new block {" + block.getId() + "} with " + pendingTransactions.size() + " transactions." + (debug && debugTimer != 0 ? " transactions. (t = " + debugTimer + "s remaining)" : ""));
+				Report.log(LocalDateTime.now() + " : Applying new block {" + block.getId() + "} with " + pendingTransactions.size() + " transactions.");
 				
 				try {
 					pendingTransactions.forEach((t) -> t.setBlock(block));
@@ -136,14 +104,8 @@ public class BlockchainDemo {
 		report.start();
 	}
 	
-	public static void sendNewValue(int b) {
-		if(lastValue == b) return;
-		if(debug) {
-			if(b > debugMaxValue) debugMaxValue = b;
-			else if(b < debugMinValue) debugMinValue = b;
-
-			AlwaysOnTopDisplay.updateDebug(debugMinValue, debugMaxValue);
-		}
+	public static void sendNewValue(String b) {
+		if(lastValue != null && lastValue.equals(b)) return;
 		AlwaysOnTopDisplay.updateLastValue(b);
 		pendingTransactions.add(Transaction.createTransaction(local, b));
 	}

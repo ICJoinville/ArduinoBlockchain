@@ -28,16 +28,12 @@ public class Simulation {
     private static Block lastBlock;
     private static long lastBlockId;
     private static Account local;
-    public static int lastValue;
+    public static String lastValue;
     public static List<Transaction> pendingTransactions = new ArrayList<>();
-    private static final boolean debug = true;
-    private static int debugTimer = 30 * 60;
-    private static int debugMaxValue = Integer.MIN_VALUE;
-    private static int debugMinValue = Integer.MAX_VALUE;
 
     public static void main(String[] args) throws IOException, SQLException {
         Report.loadLogFile();
-        AlwaysOnTopDisplay.setup(debug);
+        AlwaysOnTopDisplay.setup();
 
         Report.log("Aguardando conexão serial.");
 
@@ -49,30 +45,10 @@ public class Simulation {
 
         System.out.println(new GsonBuilder().registerTypeAdapter(Block.class, new BlockAdapter()).create().toJson(lastBlock));
 
-        if(debug && debugTimer > 0) {
-            new Thread(() -> {
-                while(debugTimer > 0) {
-                    debugTimer--    ;
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                try {
-                    System.out.println("Min: " + debugMinValue + " Max: " + debugMaxValue + " Qtd. Transações: " + DatabaseInitializer.transactionDao.countOf() + " Qtd. Blocos: " + DatabaseInitializer.blockDao.countOf());
-                } catch (SQLException e) {
-                    System.out.println("Min: " + debugMinValue + " Max: " + debugMaxValue);
-                    throw new RuntimeException(e);
-                }
-                System.exit(0);
-            }).start();
-        }
-
         Thread thread = new Thread(() -> {
             while(true) {
                 Block block = new Block((int) lastBlockId + 1, lastBlock);
-                Report.log(LocalDateTime.now() + " : Applying new block {" + block.getId() + "} with " + pendingTransactions.size() + (debug && debugTimer != 0 ? " transactions. (t = " + debugTimer + "s remaining)" : ""));
+                Report.log(LocalDateTime.now() + " : Applying new block {" + block.getId() + "} with " + pendingTransactions.size());
 
                 try {
                     pendingTransactions.forEach((t) -> t.setBlock(block));
@@ -116,13 +92,8 @@ public class Simulation {
         populateWithSimulatedValues();
     }
 
-    public static void sendNewValue(int b) {
-        if(lastValue == b) return;
-        if(debug) {
-            if(b > debugMaxValue) debugMaxValue = b;
-            else if(b < debugMinValue) debugMinValue = b;
-            AlwaysOnTopDisplay.updateDebug(debugMinValue, debugMaxValue);
-        }
+    public static void sendNewValue(String b) {
+        if(lastValue != null && lastValue.equals(b)) return;
         AlwaysOnTopDisplay.updateLastValue(b);
         pendingTransactions.add(Transaction.createTransaction(local, b));
     }
@@ -131,8 +102,7 @@ public class Simulation {
         // 0-255
         Thread t = new Thread(() -> {
             while(true) {
-                int rand = new Random().nextInt(0,255);
-                sendNewValue(rand);
+                sendNewValue("{\"temperature\": "+new Random().nextInt(18,25)+", \"pressure\": "+new Random().nextInt(1008, 1020)+", \"humidity\": "+new Random().nextDouble(0, 100)+"}");
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {

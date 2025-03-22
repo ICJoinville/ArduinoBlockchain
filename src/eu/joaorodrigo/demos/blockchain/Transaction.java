@@ -22,30 +22,30 @@ public class Transaction {
 	@DatabaseField(columnName = "timestamp")
 	private long millis;
 	
-	@DatabaseField(columnName = "value")
-	private double amount;
+	@DatabaseField(columnName = "data")
+	private String data;
 	
 	@DatabaseField(foreign = true)
 	private Block block;
 	
-	public Transaction(Account who, double amount) {
+	public Transaction(Account who, String data) {
 		this.who = who;
-		this.amount = amount;
+		this.data = data;
 		this.millis = System.currentTimeMillis();
 	}
 	
 	public Transaction () {}
 	
-	public static Transaction createTransaction(Account who, double amount) {
-		return new Transaction(who, amount);
+	public static Transaction createTransaction(Account who, String data) {
+		return new Transaction(who, data);
 	}
 
 	public Account getOwner() {
 		return who;
 	}
 
-	public double getAmount() {
-		return amount;
+	public String getData() {
+		return data;
 	}
 	
 	public long getTimestamp() {
