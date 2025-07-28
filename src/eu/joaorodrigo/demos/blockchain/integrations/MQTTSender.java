@@ -20,6 +20,9 @@ public class MQTTSender {
 
     public static void send(String b) {
         try {
+
+            if(!client.isConnected()) client.connect();
+
             System.out.println("MQTT-Publishing message: "+ b);
             MqttMessage message = new MqttMessage(b.getBytes());
             message.setQos(0);
