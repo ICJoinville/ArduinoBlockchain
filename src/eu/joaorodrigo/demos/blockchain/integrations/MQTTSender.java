@@ -1,13 +1,9 @@
 package eu.joaorodrigo.demos.blockchain.integrations;
 
 import org.eclipse.paho.mqttv5.client.MqttClient;
-import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
-import org.eclipse.paho.mqttv5.common.MqttPersistenceException;
-import org.eclipse.paho.mqttv5.common.MqttSecurityException;
-
 public class MQTTSender {
 
     private static MqttClient client;
