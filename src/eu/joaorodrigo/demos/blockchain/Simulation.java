@@ -7,6 +7,7 @@ import eu.joaorodrigo.demos.blockchain.account.AccountManager;
 import eu.joaorodrigo.demos.blockchain.adapters.BlockAdapter;
 import eu.joaorodrigo.demos.blockchain.database.DatabaseInitializer;
 import eu.joaorodrigo.demos.blockchain.displays.AlwaysOnTopDisplay;
+import eu.joaorodrigo.demos.blockchain.integrations.MQTTSender;
 
 import javax.swing.*;
 import java.awt.*;
@@ -96,13 +97,14 @@ public class Simulation {
         if(lastValue != null && lastValue.equals(b)) return;
         AlwaysOnTopDisplay.updateLastValue(b);
         pendingTransactions.add(Transaction.createTransaction(local, b));
+        MQTTSender.send(b);
     }
 
     public static void populateWithSimulatedValues() {
         // 0-255
         Thread t = new Thread(() -> {
             while(true) {
-                sendNewValue("{\"temperature\": "+new Random().nextInt(18,25)+", \"pressure\": "+new Random().nextInt(1008, 1020)+", \"humidity\": "+new Random().nextDouble(0, 100)+"}");
+                sendNewValue("{\"temperature\": "+new Random().nextInt(18,25)+", \"pressure\": "+new Random().nextInt(1008, 1020)+", \"humidity\": "+new Random().nextDouble(0, 100)+", \"gpsLatitude\": "+new Random().nextFloat(-90,90)+", \"gpsLongitude\": "+new Random().nextFloat(-90,90)+", \"timestamp\": "+System.currentTimeMillis()+"}");
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {

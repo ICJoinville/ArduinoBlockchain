@@ -6,7 +6,7 @@
 
     <groupId>eu.joaorodrigo</groupId>
     <artifactId>ArduinoBlockchain</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>2.0-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -45,7 +45,11 @@
             <artifactId>mysql-connector-j</artifactId>
             <version>9.0.0</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
+            <version>1.2.5</version>
+        </dependency>
     </dependencies>
 
 </project>
