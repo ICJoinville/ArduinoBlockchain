@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -22,7 +23,7 @@ public class Transaction {
 	@DatabaseField(columnName = "timestamp")
 	private long millis;
 	
-	@DatabaseField(columnName = "data")
+	@DatabaseField(columnName = "data", dataType = DataType.LONG_STRING)
 	private String data;
 	
 	@DatabaseField(foreign = true)

@@ -1,5 +1,6 @@
 package eu.joaorodrigo.demos.blockchain;
 
+import java.awt.*;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -11,17 +12,15 @@ import eu.joaorodrigo.demos.blockchain.account.Account;
 import eu.joaorodrigo.demos.blockchain.account.AccountManager;
 import eu.joaorodrigo.demos.blockchain.database.DatabaseInitializer;
 import eu.joaorodrigo.demos.blockchain.displays.AlwaysOnTopDisplay;
+import eu.joaorodrigo.demos.blockchain.integrations.MQTTSender;
 import jssc.SerialPort;
-import jssc.SerialPortException;
-import jssc.SerialPortList;
-
-import static jssc.SerialPort.*;
 
 public class BlockchainDemo {
 	
 	static {
 		DatabaseInitializer.setup();
-		local = AccountManager.createNewUser("Arduino");
+		local = AccountManager.createNewUser("node-1");
+		new MQTTSender();
 	}
 	
 	private static Block lastBlock;
@@ -33,23 +32,17 @@ public class BlockchainDemo {
 	private static short baud = (short) 115200;
 	public static SerialPort comPort;
 
+	public static AlwaysOnTopDisplay display;
 
-
-	public static void main(String[] args) throws IOException, SerialPortException, SQLException {
+	public static void main(String[] args) throws IOException, SQLException {
 		Report.loadLogFile();
 
-		AlwaysOnTopDisplay.setup();
-		
-		Report.log("Aguardando conexão serial.");
-		while(SerialPortList.getPortNames().length == 0);
-		comPort = new SerialPort(SerialPortList.getPortNames()[0]);
-		comPort.openPort();
-		comPort.setParams(BAUDRATE_115200,  DATABITS_8, STOPBITS_1, PARITY_NONE);
-		
-		int mask = SerialPort.MASK_RXCHAR + SerialPort.MASK_CTS + SerialPort.MASK_DSR;
-		comPort.setEventsMask(mask);
-		comPort.addEventListener(new SerialReadEventHandler());
-		
+		if(!GraphicsEnvironment.isHeadless()) {
+			display = new AlwaysOnTopDisplay();
+			display.setup();
+		}
+
+
 		lastBlockId = DatabaseInitializer.blockDao.countOf();
 		System.out.println(lastBlockId + " transações encontradas.");
 		
@@ -65,7 +58,8 @@ public class BlockchainDemo {
 					pendingTransactions.forEach((t) -> t.setBlock(block));
 					DatabaseInitializer.transactionDao.create(pendingTransactions);
 					DatabaseInitializer.blockDao.create(block);
-					AlwaysOnTopDisplay.updateTransactionsAmount();
+					if(!GraphicsEnvironment.isHeadless())
+						display.updateTransactionsAmount();
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}
@@ -74,9 +68,10 @@ public class BlockchainDemo {
 				
 				lastBlock = block;
 				lastBlockId = block.getId();
-				AlwaysOnTopDisplay.updateLastBlockId(lastBlockId);
+				if(display != null)
+					display.updateLastBlockId(lastBlockId);
 				try {
-					Thread.sleep(5000);
+					Thread.sleep(20000);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -106,7 +101,7 @@ public class BlockchainDemo {
 	
 	public static void sendNewValue(String b) {
 		if(lastValue != null && lastValue.equals(b)) return;
-		AlwaysOnTopDisplay.updateLastValue(b);
+		if(display != null) display.updateLastValue(b);
 		pendingTransactions.add(Transaction.createTransaction(local, b));
 	}
 

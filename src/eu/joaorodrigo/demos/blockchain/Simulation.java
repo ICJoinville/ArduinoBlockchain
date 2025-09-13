@@ -32,9 +32,12 @@ public class Simulation {
     public static String lastValue;
     public static List<Transaction> pendingTransactions = new ArrayList<>();
 
+    private static AlwaysOnTopDisplay display;
+
     public static void main(String[] args) throws IOException, SQLException {
         Report.loadLogFile();
-        AlwaysOnTopDisplay.setup();
+        display = new AlwaysOnTopDisplay();
+        display.setup();
 
         Report.log("Aguardando conexão serial.");
 
@@ -55,7 +58,7 @@ public class Simulation {
                     pendingTransactions.forEach((t) -> t.setBlock(block));
                     DatabaseInitializer.transactionDao.create(pendingTransactions);
                     DatabaseInitializer.blockDao.create(block);
-                    AlwaysOnTopDisplay.updateTransactionsAmount();
+                    display.updateTransactionsAmount();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -64,7 +67,7 @@ public class Simulation {
 
                 lastBlock = block;
                 lastBlockId = block.getId();
-                AlwaysOnTopDisplay.updateLastBlockId(lastBlockId);
+                display.updateLastBlockId(lastBlockId);
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
@@ -95,9 +98,9 @@ public class Simulation {
 
     public static void sendNewValue(String b) {
         if(lastValue != null && lastValue.equals(b)) return;
-        AlwaysOnTopDisplay.updateLastValue(b);
+        display.updateLastValue(b);
         pendingTransactions.add(Transaction.createTransaction(local, b));
-        MQTTSender.send(b);
+        //MQTTSender.send(b);
     }
 
     public static void populateWithSimulatedValues() {
