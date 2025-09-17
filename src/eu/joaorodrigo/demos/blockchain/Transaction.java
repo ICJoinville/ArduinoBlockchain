@@ -4,6 +4,9 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -28,12 +31,19 @@ public class Transaction {
 	
 	@DatabaseField(foreign = true)
 	private Block block;
-	
+
+    private static Gson gson = new Gson();
+
 	public Transaction(Account who, String data) {
 		this.who = who;
 		this.data = data;
 		this.millis = System.currentTimeMillis();
-	}
+        long timestamp = gson.fromJson(data, JsonObject.class).get("timestamp").getAsLong();
+
+        if(millis < 1000000000L) {
+            this.data = this.data.replace(millis + "", System.currentTimeMillis() +"");
+        }
+    }
 	
 	public Transaction () {}
 	
